@@ -127,10 +127,10 @@ public class GameActivityGoogleMaps extends FragmentActivity implements OnMapRea
         settings.setScrollGesturesEnabled(false);
         settings.setTiltGesturesEnabled(false);
         settings.setZoomGesturesEnabled(false);
-
-        boolean success = googleMap.setMapStyle(
-                MapStyleOptions.loadRawResourceStyle(
-                        this, R.raw.style_xd));
+//
+//        boolean success = googleMap.setMapStyle(
+//                MapStyleOptions.loadRawResourceStyle(
+//                        this, R.raw.style_xd));
 
 
         CameraPosition cameraPosition = new CameraPosition.Builder().target(mimuw).zoom(20).tilt(10).build();

@@ -4,13 +4,12 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.bluetooth.BluetoothDevice;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
@@ -22,8 +21,9 @@ import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.UiSettings;
+import com.mapbox.mapboxsdk.style.layers.Layer;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 
 public class GameActivity extends FragmentActivity implements GamePadListener {
 
@@ -39,26 +39,42 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
     private volatile boolean fireOn = false;
     private boolean leftOn = false;
     private boolean rightOn = false;
-    //    private volatile double acceleration = 0;
     private volatile float speed = 0;
     private MapboxMap mMap;
+    private Layer backgroundLayer;
+    private int actColor = Color.GREEN;
 
-    private MapboxMap.CancelableCallback driveCallBack = new MapboxMap.CancelableCallback() {
+    private Handler handler = new Handler();
+    Runnable cameraUpdater = new Runnable() {
         @Override
-        public void onFinish() {
-            double rotation = Math.toRadians(car.getRotation());
-            float vx = (float) (Math.sin(rotation) * speed);
-            float vy = (float) (Math.cos(rotation) * -speed);
-            mMap.animateCamera(CameraUpdateFactory.scrollBy(vx, vy), 100, driveCallBack);
+        public void run() {
+            updateCameraPosition();
+            handler.postDelayed(this, 100);
         }
+    };
+    private Handler sirenHandler = new Handler(Looper.getMainLooper());
 
+    Runnable copSirenSimulator = new Runnable() {
         @Override
-        public void onCancel() {
-            Log.d("debugi", "onCancel: chuj");
-
+        public void run() {
+            if (fireOn) {
+                if (actColor != Color.RED) actColor = Color.RED;
+                else actColor = Color.BLUE;
+                if (backgroundLayer == null) backgroundLayer = mMap.getLayer("background");
+                backgroundLayer.setProperties(PropertyFactory.backgroundColor(actColor));
+                sirenHandler.postDelayed(this, 1000);
+            } else {
+                backgroundLayer.setProperties(PropertyFactory.backgroundColor(Color.BLACK));
+            }
         }
     };
 
+    private void updateCameraPosition() {
+        double rotation = Math.toRadians(car.getRotation());
+        float vx = (float) (Math.sin(rotation) * speed);
+        float vy = (float) (Math.cos(rotation) * -speed);
+        mMap.animateCamera(CameraUpdateFactory.scrollBy(vx, vy), 100);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,63 +86,30 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
     }
 
     private void initMapAndCar(Bundle savedInstanceState) {
-
         mapView = (MapView) findViewById(R.id.mapView);
+        car = findViewById(R.id.car);
+
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(mapboxMap -> {
             mMap = mapboxMap;
             LatLng mimuw = new LatLng(52.211804, 20.982356);
-//                mMap.setBuildingsEnabled(true);
             UiSettings settings = mMap.getUiSettings();
             settings.setCompassEnabled(false);
             settings.setZoomControlsEnabled(false);
             settings.setAllGesturesEnabled(false);
-//                settings.setIndoorLevelPickerEnabled(false);
-//                settings.setMapToolbarEnabled(false);
-//                settings.setMyLocationButtonEnabled(false);
             settings.setRotateGesturesEnabled(false);
             settings.setScrollGesturesEnabled(false);
             settings.setTiltGesturesEnabled(false);
             settings.setZoomGesturesEnabled(false);
-
-//                boolean success = googleMap.setMapStyle(
-//                        MapStyleOptions.loadRawResourceStyle(
-//                                this, R.raw.style_xd));
-
-
-            CameraPosition cameraPosition = new CameraPosition.Builder().target(mimuw).zoom(20).tilt(10).build();
+            mapView.setStyleUrl("mapbox://styles/gaspardiv/cjqu9koop19v82st0ev3n3z8g");
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(mimuw).zoom(18).build();
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
             car.setVisibility(View.VISIBLE);
             speedChanger.start();
-                driveCallBack.onFinish();
-//        startSnaping();
-
+            handler.postDelayed(cameraUpdater, 100);
         });
 
-        car = findViewById(R.id.car);
     }
-
-    public static Bitmap loadBitmapFromView(View v, int width, int height) {
-        Bitmap b = Bitmap.createBitmap(width , height, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        v.layout(0, 0, v.getLayoutParams().width, v.getLayoutParams().height);
-        v.draw(c);
-        return b;
-    }
-
-//    GoogleMap.SnapshotReadyCallback snapshotReadyCallback = new GoogleMap.SnapshotReadyCallback() {
-//        @Override
-//        public void onSnapshotReady(Bitmap snapshot) {
-////            Log.d("asd", "onSnapshotReady: " + car.getX() + " " + car.getY() + " " + car.getRotation());
-////            int [] coords = new int[2];
-////            car.getLocationInWindow(coords);
-////            Log.d("xded", "onSnapshotReady: " + coords[0] + " " + coords[1]);
-////            car.getLocationOnScreen(coords);
-////            Log.d("xded3", "onSnapshotReady: " + coords[0] + " " + coords[1]);
-//            Bitmap cared = Bitmap.createBitmap(snapshot, snapshot.getWidth()/2-15, snapshot.getHeight()/2-15, 30, 30);
-//            mMap.snapshot(this);
-//        }
-//    };
 
     private void connectGamePad() {
         if (getIntent().getExtras() != null) {
@@ -135,13 +118,12 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
         }
     }
 
-
-
     @Override
     protected void onStart() {
         super.onStart();
         mapView.onStart();
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -171,25 +153,14 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
     public void onLowMemory() {
         super.onLowMemory();
         mapView.onLowMemory();
-    };
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mapView.onDestroy();
-        gamepad.disconnect();
+        if (gamepad != null) gamepad.disconnect();
         speedChanger.stopThread();
-    }
-
-
-    private void startSnaping() {
-//        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-//            @Override
-//            public void onMapLoaded() {
-//                mMap.snapshot(snapshotReadyCallback);
-//                mMap.setOnMapLoadedCallback(null);
-//            }
-//        });
     }
 
     @Override
@@ -199,12 +170,13 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
 
     @Override
     public void onFireOn() {
-
+        sirenHandler.postDelayed(copSirenSimulator, 100);
+        fireOn = true;
     }
 
     @Override
     public void onFireOff() {
-
+        fireOn = false;
     }
 
     @Override
@@ -265,7 +237,7 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
     }
 
     void stopRotating() {
-        if (carRotator!= null) carRotator.cancel();
+        if (carRotator != null) carRotator.cancel();
     }
 
     public void upClicked(View view) {
@@ -279,7 +251,6 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
     }
 
     public void downClicked(View view) {
-//        startSnaping();
         if (downOn) {
             onDownOff();
             ((FloatingActionButton) view).setBackgroundTintList(ColorStateList.valueOf(Color.RED));
@@ -305,6 +276,16 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
             ((FloatingActionButton) view).setBackgroundTintList(ColorStateList.valueOf(Color.RED));
         } else {
             onLeftOn();
+            ((FloatingActionButton) view).setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
+        }
+    }
+
+    public void fireClicked(View view) {
+        if (fireOn) {
+            onFireOff();
+            ((FloatingActionButton) view).setBackgroundTintList(ColorStateList.valueOf(Color.RED));
+        } else {
+            onFireOn();
             ((FloatingActionButton) view).setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
         }
     }

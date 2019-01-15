@@ -9,13 +9,12 @@
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets" />
+        android:layout_height="match_parent" />
     <ImageView
         android:id="@+id/car"
         android:visibility="invisible"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
         android:background="@android:color/transparent"
         android:scaleType="fitCenter"
         android:gravity="center"
@@ -33,7 +32,9 @@
         android:layout_marginRight="35dp"
         android:layout_marginBottom="90dp"
         android:onClick="upClicked"
-        android:clickable="true" />
+        android:clickable="true"
+        android:visibility="gone"
+        />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/floatingActionButton"
@@ -46,7 +47,9 @@
         android:layout_marginRight="35dp"
         android:layout_marginBottom="10dp"
         android:onClick="downClicked"
-        android:clickable="true" />
+        android:clickable="true"
+        android:visibility="gone"
+        />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/floatingActionButton3"
@@ -59,10 +62,27 @@
         android:layout_marginRight="10dp"
         android:layout_marginBottom="50dp"
         android:onClick="rightClicked"
-        android:clickable="true" />
+        android:clickable="true"
+        android:visibility="gone"
+        />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/floatingActionButton2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/mapView"
+        android:layout_alignRight="@+id/mapView"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:clickable="true"
+        android:onClick="fireClicked"
+        android:visibility="gone"
+        />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/floatingActionButton4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -71,6 +91,8 @@
         android:layout_marginEnd="60dp"
         android:layout_marginRight="60dp"
         android:layout_marginBottom="50dp"
+        android:clickable="true"
         android:onClick="leftClicked"
-        android:clickable="true" />
+        android:visibility="gone"
+        />
 </RelativeLayout>
