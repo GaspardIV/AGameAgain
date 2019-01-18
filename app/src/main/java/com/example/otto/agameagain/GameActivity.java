@@ -5,6 +5,7 @@ import android.animation.ValueAnimator;
 import android.bluetooth.BluetoothDevice;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,18 +54,33 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
         }
     };
     private Handler sirenHandler = new Handler(Looper.getMainLooper());
+    MediaPlayer mp = null;
 
     Runnable copSirenSimulator = new Runnable() {
         @Override
         public void run() {
             if (fireOn) {
-                if (actColor != Color.RED) actColor = Color.RED;
-                else actColor = Color.BLUE;
+                if (mp == null) {
+                    mp = MediaPlayer.create(GameActivity.this, R.raw.police);
+                    mp.setLooping(true);
+                    mp.start();
+                }
+
+                if (actColor != Color.RED) {
+                    actColor = Color.RED;
+                    gamepad.setRedLight();
+                } else {
+                    actColor = Color.BLUE;
+                    gamepad.setBlueLight();
+                }
                 if (backgroundLayer == null) backgroundLayer = mMap.getLayer("background");
                 backgroundLayer.setProperties(PropertyFactory.backgroundColor(actColor));
                 sirenHandler.postDelayed(this, 1000);
             } else {
                 backgroundLayer.setProperties(PropertyFactory.backgroundColor(Color.BLACK));
+                gamepad.resetLight();
+                mp.release();
+                mp = null;
             }
         }
     };
@@ -170,13 +186,20 @@ public class GameActivity extends FragmentActivity implements GamePadListener {
 
     @Override
     public void onFireOn() {
-        sirenHandler.postDelayed(copSirenSimulator, 100);
-        fireOn = true;
+//        sirenHandler.postDelayed(copSirenSimulator, 100);
+//        fireOn = true;
+
+        if (fireOn) {
+            fireOn = false;
+        } else {
+            sirenHandler.postDelayed(copSirenSimulator, 100);
+            fireOn = true;
+        }
     }
 
     @Override
     public void onFireOff() {
-        fireOn = false;
+//        fireOn = false;
     }
 
     @Override

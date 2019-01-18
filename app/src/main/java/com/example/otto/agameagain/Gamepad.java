@@ -74,6 +74,10 @@ public class Gamepad {
         btService.write( new byte[]{'g', 'b', 'R'});
     }
 
+    public void setBlueLight() {
+        btService.write( new byte[]{'g', 'B', 'r'});
+    }
+
     public void setYellowLight() {
         btService.write( new byte[]{'G', 'b', 'R'});
     }
