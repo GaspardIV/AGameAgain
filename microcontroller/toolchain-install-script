@@ -1,0 +1,98 @@
+#!/bin/sh
+
+# Skrypt instalujący na maszynie students narzędzia programistyczne na
+# zajęcia z programowania mikrokontrolerów 2.0
+# Marcin Pieczarski @mimuw
+# Do bieżącego katalogu, w którym znajduje się ten skrypt, należy skopiować
+# paczki
+#
+# binutils-2.31.1.tar.gz       [http://ftp.gnu.org/gnu/binutils]
+# gcc-8.2.0.tar.gz             [http://gcc.gnu.org/mirrors.html]
+# newlib-3.0.0.20180831.tar.gz [ftp://sources.redhat.com/pub/newlib/index.html]
+# gdb-8.2.tar.gz               [http://ftp.gnu.org/gnu/gdb]
+# openocd-0.10.0.tar.gz        [http://sourceforge.net/projects/openocd/files/openocd]
+#
+# oraz łatę
+#
+# t-arm-elf
+
+# Przerwij skrypt, gdy któreś polecenie zakończy się błędem.
+set -e
+
+# Ustaw katalog, w którym ma zostać zainstalowany zestaw narzędzi.
+PREFIX=/opt/arm
+
+# Wersje instalowanych pakietów
+BINUTILS_VER=2.31.1
+GCC_VER=8.2.0
+NEWLIB_VER=3.0.0.20180831
+GDB_VER=8.2
+OPENOCD_VER=0.10.0
+
+# Instalowane pliki mają być dostępne dla wszystkich.
+umask 022
+
+# Dodaj ścieżkę poszukiwania plików.
+# Docelowo należy coś podobnego wpisać np. do .bash_profile lub .bashrc.
+PATH=$PATH:$PREFIX/bin
+export PATH
+
+# tar -zxf binutils-$BINUTILS_VER.tar.gz
+# cd binutils-$BINUTILS_VER
+# mkdir build
+# cd build
+# ../configure --target=arm-eabi --prefix=$PREFIX
+# make
+# make install
+# cd ../..
+
+#tar -zxf gcc-$GCC_VER.tar.gz
+# Skonfiguruj multilib.
+#cp t-arm-elf gcc-$GCC_VER/gcc/config/arm/t-arm-elf
+#cd gcc-$GCC_VER
+#mkdir build
+#cd build
+#../configure --target=arm-eabi --prefix=$PREFIX --enable-languages=c --with-newlib --without-headers --disable-shared
+#make all-gcc
+#make install-gcc
+#cd ../..
+
+#tar -zxf newlib-$NEWLIB_VER.tar.gz
+#cd newlib-$NEWLIB_VER
+#mkdir build
+#cd build
+#../configure --target=arm-eabi --prefix=$PREFIX --disable-shared --disable-newlib-supplied-syscalls
+#make CFLAGS_FOR_TARGET="-O2 -ffunction-sections -fdata-sections -D__BUFSIZ__=256"
+#make install
+#cd ../..
+
+#cd gcc-$GCC_VER/build
+#make all CFLAGS_FOR_TARGET="-O2 -ffunction-sections -fdata-sections"
+#make install
+#cd ../..
+
+tar -xzf gdb-$GDB_VER.tar.gz
+cd gdb-$GDB_VER
+mkdir build
+cd build
+../configure --target=arm-eabi --prefix=$PREFIX
+make
+make install
+cd ../..
+
+tar -xzf openocd-$OPENOCD_VER.tar.gz
+cd openocd-$OPENOCD_VER
+# Zmień interpreter poleceń, aby obsługiwana była opcja -e w poleceniu echo.
+sed -i "1s|.*|\#\!/bin/bash|" configure
+mkdir build
+cd build
+../configure --prefix=$PREFIX --enable-stlink --disable-werror
+make
+make install
+cd ../..
+
+# Sprawdź pobieżnie poprawności instalacji.
+arm-eabi-gcc -v
+arm-eabi-gcc -print-multi-lib
+arm-eabi-gdb -v
+openocd -v
